@@ -21,7 +21,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Err(err) = dotenvy::dotenv() {
         match err {
             dotenvy::Error::Io(io_err) if io_err.kind() == std::io::ErrorKind::NotFound => {}
-            err => return Err(Box::new(err)),
+            err => return Err(err.into()),
         }
     }
 
