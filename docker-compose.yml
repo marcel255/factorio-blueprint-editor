@@ -4,5 +4,19 @@ services:
       context: .
       target: runtime
     ports:
-      - "8080:80"
+      - "8383:80"
     restart: unless-stopped
+  exporter:
+    build:
+      context: .
+      target: exporter
+    env_file:
+      - packages/exporter/.env
+    volumes:
+      - exporter-data:/app/data/output
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+
+volumes:
+  exporter-data:
