@@ -41,13 +41,23 @@ FROM debian:bookworm-slim AS exporter
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates curl xz-utils \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        libatomic1 \
+        libcurl4 \
+        libstdc++6 \
+        libxml2 \
+        xz-utils \
+        zlib1g \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=exporter-builder /app/target/release/factorio_data_exporter /usr/local/bin/factorio_data_exporter
 COPY packages/exporter/basisu ./basisu
 COPY packages/exporter/basisu.exe ./basisu.exe
 COPY packages/exporter/data ./data
+
+RUN mkdir -p /app/data/output
 
 EXPOSE 8081
 
