@@ -38,8 +38,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let static_ = Static::new(Path::new("data/output/"));
 
-    let bind_addr = std::env::var("EXPORTER_BIND_ADDRESS")
-        .unwrap_or_else(|_| "0.0.0.0:8081".to_string());
+    let bind_addr =
+        std::env::var("EXPORTER_BIND_ADDRESS").unwrap_or_else(|_| "0.0.0.0:8081".to_string());
     let listener = TcpListener::bind(bind_addr).await?;
 
     loop {
