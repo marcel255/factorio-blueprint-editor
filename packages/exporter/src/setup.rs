@@ -5,6 +5,7 @@ use regex::Regex;
 use serde::Deserialize;
 use std::borrow::Cow;
 use std::collections::HashMap;
+use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::{collections::HashSet, env};
@@ -361,7 +362,17 @@ pub async fn download_factorio(
             }
 
             println!("Removing existing data_dir at {}", data_dir.display());
-            tokio::fs::remove_dir_all(data_dir).await?;
+            match tokio::fs::remove_dir_all(data_dir).await {
+                Ok(()) => {}
+                Err(error) if error.kind() == ErrorKind::ResourceBusy => {
+                    println!(
+                        "Failed to remove {} due to {error:?}; attempting to clear contents instead",
+                        data_dir.display()
+                    );
+                    clear_directory_contents(data_dir).await?;
+                }
+                Err(error) => return Err(Box::new(error)),
+            }
         }
         tokio::fs::create_dir_all(data_dir).await?;
 
@@ -369,6 +380,23 @@ pub async fn download_factorio(
         let token = get_env_var!("FACTORIO_TOKEN")?;
 
         download(factorio_version, &username, &token, data_dir).await?;
+    }
+
+    Ok(())
+}
+
+async fn clear_directory_contents(path: &Path) -> Result<(), Box<dyn Error>> {
+    let mut entries = tokio::fs::read_dir(path).await?;
+
+    while let Some(entry) = entries.next_entry().await? {
+        let entry_path = entry.path();
+        let file_type = entry.file_type().await?;
+
+        if file_type.is_dir() {
+            tokio::fs::remove_dir_all(&entry_path).await?;
+        } else {
+            tokio::fs::remove_file(&entry_path).await?;
+        }
     }
 
     Ok(())
