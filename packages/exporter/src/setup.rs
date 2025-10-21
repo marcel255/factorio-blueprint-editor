@@ -326,10 +326,11 @@ pub async fn download_factorio(
         println!("Downloaded Factorio version matches required version");
     } else {
         println!("Downloading Factorio v{}", factorio_version);
-        if data_dir.is_dir() {
-            tokio::fs::remove_dir_all(data_dir).await?;
-        }
         tokio::fs::create_dir_all(data_dir).await?;
+
+        if tokio::fs::metadata(base_factorio_dir).await.is_ok() {
+            tokio::fs::remove_dir_all(base_factorio_dir).await?;
+        }
 
         let username = get_env_var!("FACTORIO_USERNAME")?;
         let token = get_env_var!("FACTORIO_TOKEN")?;
