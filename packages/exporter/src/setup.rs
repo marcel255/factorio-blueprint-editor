@@ -327,6 +327,40 @@ pub async fn download_factorio(
     } else {
         println!("Downloading Factorio v{}", factorio_version);
         if data_dir.is_dir() {
+            println!("Existing data_dir detected at {}", data_dir.display());
+
+            match tokio::fs::read_dir(data_dir).await {
+                Ok(mut entries) => {
+                    let mut children = Vec::new();
+                    while let Some(entry) = entries.next_entry().await? {
+                        let file_type = entry.file_type().await?;
+                        let entry_path = entry.path();
+                        let kind = if file_type.is_dir() {
+                            "dir"
+                        } else if file_type.is_file() {
+                            "file"
+                        } else if file_type.is_symlink() {
+                            "symlink"
+                        } else {
+                            "other"
+                        };
+                        children.push(format!("{} ({kind})", entry_path.display()));
+                    }
+                    println!(
+                        "Contents of {} before removal: {}",
+                        data_dir.display(),
+                        children.join(", ")
+                    );
+                }
+                Err(error) => {
+                    println!(
+                        "Failed to read contents of {} before removal: {error:?}",
+                        data_dir.display()
+                    );
+                }
+            }
+
+            println!("Removing existing data_dir at {}", data_dir.display());
             tokio::fs::remove_dir_all(data_dir).await?;
         }
         tokio::fs::create_dir_all(data_dir).await?;
