@@ -1,0 +1,18 @@
+# Ignore local development artifacts and dependencies
+node_modules
+packages/**/node_modules
+npm-debug.log*
+dist
+.cache
+.DS_Store
+.git
+.gitignore
+.vscode
+.env
+
+# Build output folders
+packages/website/dist
+packages/editor/dist
+
+# Misc
+*.log

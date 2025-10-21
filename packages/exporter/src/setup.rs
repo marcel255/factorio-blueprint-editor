@@ -141,6 +141,14 @@ pub async fn extract(output_dir: &Path, base_factorio_dir: &Path) -> Result<(), 
     let extracted_data_path = base_factorio_dir.join("script-output/data.json");
     let factorio_executable = base_factorio_dir.join("bin/x64/factorio");
 
+    if tokio::fs::metadata(&factorio_executable).await.is_err() {
+        return Err(format!(
+            "Factorio binary was not found at {}. Ensure the download succeeded and that the container can write to the /app/data directory.",
+            factorio_executable.display()
+        )
+        .into());
+    }
+
     let info = include_str!("export-data/info.json");
     let script = include_str!("export-data/control.lua");
     let data = include_str!("export-data/data-final-fixes.lua");
@@ -318,10 +326,11 @@ pub async fn download_factorio(
         println!("Downloaded Factorio version matches required version");
     } else {
         println!("Downloading Factorio v{}", factorio_version);
-        if data_dir.is_dir() {
-            tokio::fs::remove_dir_all(data_dir).await?;
-        }
         tokio::fs::create_dir_all(data_dir).await?;
+
+        if tokio::fs::metadata(base_factorio_dir).await.is_ok() {
+            tokio::fs::remove_dir_all(base_factorio_dir).await?;
+        }
 
         let username = get_env_var!("FACTORIO_USERNAME")?;
         let token = get_env_var!("FACTORIO_TOKEN")?;

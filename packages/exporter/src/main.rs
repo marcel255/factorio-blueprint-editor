@@ -18,7 +18,12 @@ lazy_static! {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    dotenvy::dotenv()?;
+    if let Err(err) = dotenvy::dotenv() {
+        match err {
+            dotenvy::Error::Io(io_err) if io_err.kind() == std::io::ErrorKind::NotFound => {}
+            err => return Err(err.into()),
+        }
+    }
 
     let factorio_dir_name = match std::env::consts::OS {
         "linux" => "factorio",
